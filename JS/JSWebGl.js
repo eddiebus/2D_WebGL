@@ -210,7 +210,6 @@ class WebGlContext {
             height: this._canvas.height
         };
     }
-
     setCanFullScreen(bool) {
         this._canFullScreen = bool
     }

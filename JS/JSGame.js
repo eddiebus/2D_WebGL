@@ -4,7 +4,6 @@ function GetVectorMagnitude(inputVector) {
     for (let i = 0; i < inputVector.length; i++) {
         vecSum += Math.pow(inputVector[i], 2);
     }
-
     result = Math.sqrt(vecSum);
     return result;
 }
@@ -20,7 +19,6 @@ function GetNormalisedVector(inputVector) {
             returnVector.push(0);
         }
     }
-
     return returnVector;
 }
 
@@ -111,7 +109,8 @@ class JSGameTouch {
 
         if (!myTouch) {
             return;
-        } else {
+        } else
+        {
             this._targetElementRect = this._targetElement.getBoundingClientRect();
 
             let x = myTouch.pageX - this._targetElementRect.left;
@@ -121,6 +120,7 @@ class JSGameTouch {
 
             this.endPos = [x, y];
 
+            // Get Move Delta
             this.moveDelta = [
                 this.endPos[0] - this._lastPos[0],
                 this.endPos[1] - this._lastPos[1]
@@ -139,39 +139,45 @@ class JSGameTouch {
     }
 
     _handleTouchEndEvent(event) {
-        //Check if this touch did end
+        //Check if this touch changed in current event
         let myTouch = null;
         for (let i = 0; i < event.changedTouches.length; i++) {
             if (event.changedTouches[i].identifier == this.id) {
                 myTouch = event.changedTouches[i];
             }
         }
-
+        // Not this touch, do nothing
         if (!myTouch) {
             return;
         }
+
         this.Up = true;
         this.Down = false;
         this.isPressed = false;
-        this.moveDelta = [0, 0];
         this._Frames = 0;
+
+
+        this.ConsoleLogSelf();
     }
 
     // Reset events flags in object.
     _Reset() {
-        this.moveDelta = [0, 0];
         this._Frames = 0;
         this.Down = false;
+
+        //Respond to post touch-up event
         if (this.Up) {
             this.duration = 0;
             this.Up = false;
             this.dirVector = [0, 0];
+            this.moveDelta = [0, 0];
         }
     }
 
     _Tick() {
         //Check if flags must be reset
         if (this.isPressed | this.Up) {
+            //Increase duration flag
             this.duration += Time.deltaTime;
             this._Frames += 1;
             if (this._Frames >= 2) {
@@ -181,6 +187,16 @@ class JSGameTouch {
         window.requestAnimationFrame((time) => {
             this._Tick();
         })
+    }
+
+    // Print Contents of Self to console
+    // Keep it readable
+    ConsoleLogSelf(){
+        console.log(
+        `Touch Event:
+        EndPosition: ${this.endPos},
+        StartPosition: ${this.startPos},
+        MoveDelta: ${this.moveDelta}`)
     }
 }
 
@@ -196,24 +212,100 @@ class JSGameTouchInput {
     }
 }
 
-// Mouse input handler
-class JSGameMouseInput {
-    constructor(HTMLElement) {
-        this.pos = [0, 0];
-        this._lastPos = [0, 0]
-        this.moveDelta = [0, 0];
-        this._targetElemet = HTMLElement;
-        this.inFullscreen = false;
-        this.locked = false;
 
-        this._MoveFrames = 0;
 
-        this._targetElemet.addEventListener("click", (event) => {
-            this._lockMouse(event)
+// Representation on mouse button
+class JSGameMouseButton {
+    constructor(TargetElement,ButtonID) {
+        this.ParentElement = TargetElement;
+        this.ButtonID = ButtonID;
+        this.Down = false;
+        this.Pressed = false;
+        this.Up = false;
+
+        this.Frames = 0;
+
+        // Set event listeners
+        this.ParentElement.addEventListener("mousedown", (event) => {
+            this._RespondToMouseDownEvent(event);
         })
 
+        this.ParentElement.addEventListener("mouseup", (event) => {
+            this._RespondToMouseUpEvent(event);
+        })
+
+        this._Tick();
+    }
+
+    _RespondToMouseDownEvent(event){
+        if (event.button != this.ButtonID){
+            return
+        }
+        else{
+            this.Down = true;
+            this.Pressed = true;
+            this.Frames = 0;
+        }
+    }
+
+    _RespondToMouseUpEvent(event){
+        if (event.button != this.ButtonID){
+            return
+        }
+        else{
+            this.Down = false;
+            this.Pressed = false;
+            this.Up = true;
+            this.Frames = 0;
+        }
+    }
+
+    _Reset(){
+        if (this.Down){
+            this.Down = false;
+        }
+        else if (this.Up){
+            this.Up = false;
+        }
+    }
+
+    _Tick(){
+        this.Frames += 1;
+        if (this.Frames >= 2){
+            this._Reset();
+        }
+        window.requestAnimationFrame(() =>{
+            this._Tick()
+        })
+    }
+}
+
+// Mouse input handler
+class JSGameMouseInput {
+    constructor(HTMLElement,) {
+        let MouseButton = {
+            Down: false,
+            Up: false
+        }
+
+        //Button object for l-click, r-click and middle click
+        this.Button = [];
+        for (let i = 0; i < 3; i++){
+            this.Button.push(new JSGameMouseButton(HTMLElement,i));
+        }
+
+        this._endPos = [0, 0];
+        this._lastPos = [0, 0];
+        this.Pos = [];
+        this.moveDelta = [0, 0];
+        this._targetElemet = HTMLElement;
+        this.locked = false;
+        this._MoveFrames = 0;
+
+
+
         window.addEventListener("mousemove", (event) => {
-            this._move(event)
+            this.#Move(event)
         })
 
         window.requestAnimationFrame((time) => {
@@ -221,13 +313,7 @@ class JSGameMouseInput {
         })
     }
 
-    _lockMouse(event) {
-        if (this.locked) {
-            event.target.requestPointerLock();
-        }
-    }
-
-    _move(event) {
+    #Move(event) {
         let rect = this._targetElemet.getBoundingClientRect();
 
         let x = event.pageX - rect.left;
@@ -245,8 +331,10 @@ class JSGameMouseInput {
         }
 
 
-        this.pos = [x, rect.height - y];
+        this._endPos = [x, rect.height - y];
         this.moveDelta = [event.movementX, -event.movementY];
+
+        this._lastPos = this._endPos;
 
     }
 
@@ -263,64 +351,112 @@ class JSGameMouseInput {
             this._MoveFrames = 0;
             this.moveDelta = [0, 0];
         }
-
-        this._lastPos = this.pos;
-
+        this.Pos = [...this._endPos];
         window.requestAnimationFrame((time) => {
             this._Tick();
         })
-
     }
 
+    ConsoleLog(){
+        console.log(
+            `Mouse:
+            MoveDelta: ${this.moveDelta}
+            ---
+            Left Click:
+            Down: ${this.Button[0].Down}
+            Up: ${this.Button[0].Up}
+            Pressed: ${this.Button[0].Pressed}
+            
+            Right Click:
+            Down: ${this.Button[2].Down}
+            Up: ${this.Button[2].Up}
+            Pressed: ${this.Button[2].Pressed}
+            
+            
+            Middle Click:
+            Down: ${this.Button[1].Down}
+            Up: ${this.Button[1].Up}
+            Pressed: ${this.Button[1].Pressed}
+            `
+        )
+    }
 }
 
 // Keyboard Key Object
 class JSGameKey {
-    constructor(KeyString, KeyDown, KeyPress) {
-        this.value = KeyString;
-        this.Down = KeyDown;
-        this.Press = KeyPress;
-
+    // To be created on key press only
+    constructor(KeyString) {
+        this.Name = KeyString;
+        this.Down = false;
+        this.Up = false;
+        this.Pressed = true;
         this._Frames = 0;
 
-        if (KeyString != null) {
+
+        if (this.Name != null) {
+            // Set up event listener
             window.addEventListener("keydown", (event) => {
-                if (!event.repeat) {
-                    this._SetDown(event);
-                }
+                this._RespondToKeyDownEvent(event);
             })
 
             window.addEventListener("keyup", (event) => {
-                this._SetUp(event);
+                this._RespondToKeyUpEvent(event);
             })
+            this.Tick();
+
+            this.Down = true;
         }
     }
 
-    _SetDown(event) {
-        if (event.key != this.value) {
+    _RespondToKeyDownEvent(event){
+        // Check if our key and not repeating
+        if (event.key != this.Name || event.repeat == true){
             return;
         }
         this.Down = true;
-        this.Press = true;
+        this.Pressed = true;
+        this._Frames = 1;
     }
 
-    _SetUp(event) {
-        if (event.key != this.value) {
+    _RespondToKeyUpEvent(event){
+        if (event.key != this.Name){
             return;
         }
-        this.Press = false;
-        this.Down = false;
+        this.Up = true;
+        this.Pressed = false;
+        this._Frames = 1;
+    }
+
+    // Reset flags
+    _Reset(){
+        if (this.Down == true){
+            this.Down = false;
+        }
+
+        else if (this.Up){
+            this.Up = false;
+            this.Pressed = false;
+        }
     }
 
     Tick() {
-        if (this.Down) {
-            this._Frames += 1;
+        this._Frames += 1;
+        if (this._Frames >= 2) {
+            this._Reset();
         }
 
-        if (this._Frames >= 2) {
-            this.Down = false;
-            this._Frames = 0;
-        }
+        window.requestAnimationFrame(() => {this.Tick()})
+    }
+
+    ConsoleLogSelf(){
+        console.log(
+            `Keyboard Key:
+            Name: ${this.Name}
+            Down: ${this.Down}
+            Pressed: ${this.Pressed}
+            Up: ${this.Up}
+            `
+        )
     }
 }
 
@@ -334,9 +470,6 @@ class JSGameKeyInput {
                 this._AddKeyDownEvent(event);
             }
         })
-        window.requestAnimationFrame(() => {
-            this._Tick()
-        });
     }
 
     GetKey(keyName) {
@@ -344,7 +477,7 @@ class JSGameKeyInput {
         if (index != null) {
             return this.Keys[index];
         } else {
-            return new JSGameKey(null, false, false);
+            return new JSGameKey(null);
         }
 
     }
@@ -359,7 +492,7 @@ class JSGameKeyInput {
     _GetKeyIndex(keyString) {
         let returnIndex = -1;
         for (let i = 0; i < this.Keys.length; i++) {
-            if (this.Keys[i].value == keyString) {
+            if (this.Keys[i].Name == keyString) {
                 returnIndex = i;
             }
         }
@@ -369,24 +502,13 @@ class JSGameKeyInput {
         } else {
             return null;
         }
-
     }
+
 
     _AddKeyDownEvent(keyEvent) {
         if (!this._GetKeyIndex(keyEvent.key)) {
             this.Keys.push(new JSGameKey(keyEvent.key, true, true));
         }
-    }
-
-    _Tick(deltaTime) {
-        for (let i = 0; i < this.Keys.length; i++) {
-            this.Keys[i].Tick();
-        }
-
-        window.requestAnimationFrame(() => {
-            this._Tick()
-        });
-
     }
 }
 
@@ -909,6 +1031,8 @@ let testCanvas_MouseInput = new JSGameMouseInput(testCanvas);
 testCanvas_MouseInput.locked = false;
 
 let TouchInput = new JSGameTouchInput(testCanvas);
+let KeyInput = new JSGameKeyInput();
+let MouseInput = new JSGameMouseInput(testCanvas);
 
 let MainWebGlContext = new WebGlContext(testCanvas);
 let MainShaderContext = new JSWebGLShader(MainWebGlContext);
@@ -951,19 +1075,13 @@ class HeroPlaneModel{
         let DrawTransform = new Transform();
         DrawTransform.SetParent(TargetTransform);
 
-
-
         DrawTransform.position = [0,0,0,0];
         GameShape.Square.setColour([1,1,1,1]);
         GameShape.Square.draw(JSWebGlCamera,DrawTransform);
 
-
-
-
         DrawTransform.position = [0,-1,0,0];
         DrawTransform.scale = [1,1,1,0];
         GameShape.Circle.draw(JSWebGlCamera,DrawTransform);
-
 
         DrawTransform.position = [1,0,0,0];
         DrawTransform.scale = [1,1,1,0];
@@ -979,7 +1097,6 @@ class HeroPlaneModel{
         DrawTransform.scale = [1,-0.5,1,0];
         GameShape.Triangle.setColour([1,1,0,1]);
         GameShape.Triangle.draw(JSWebGlCamera,DrawTransform);
-
     }
 }
 
@@ -1203,8 +1320,8 @@ class TestScene extends JSGameScene {
 
     Tick() {
         super.Tick();
-        console.log(`Object Count = ${this.SceneList.length}\n`);
-        console.log(`FPS  = ${1000 / Time.deltaTime}\n`);
+        //console.log(`Object Count = ${this.SceneList.length}\n`);
+        //console.log(`FPS  = ${1000 / Time.deltaTime}\n`);
         this.Camera.transform.position = [0, 0, 10];
     }
 
@@ -1219,11 +1336,20 @@ let MyTestScene = new TestScene();
 
 
 function loop() {
+
+    let key = KeyInput.GetKey("w");
+    if (KeyInput.GetKey("w").Down){
+        console.log(`KeyDown | Frames = ${KeyInput.GetKey("w")._Frames}`);
+    }
+    else if (KeyInput.GetKey("w").Up){
+        console.log("KeyUp");
+    }
+
     myCamera.Size = [testCanvas.width, testCanvas.height];
     myCamera.transform.position = [0, 0, 20];
 
     MyTestScene.Tick();
-    MainWebGlContext.clear([1, 1, 1, 1]);
+    MainWebGlContext.clear([0, 0, 1, 1]);
     MyTestScene.Draw();
 
     window.requestAnimationFrame(() => {
