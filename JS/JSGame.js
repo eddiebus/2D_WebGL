@@ -212,8 +212,6 @@ class JSGameTouchInput {
     }
 }
 
-
-
 // Representation on mouse button
 class JSGameMouseButton {
     constructor(TargetElement,ButtonID) {
@@ -389,7 +387,7 @@ class JSGameKey {
         this.Name = KeyString;
         this.Down = false;
         this.Up = false;
-        this.Pressed = true;
+        this.Pressed = false;
         this._Frames = 0;
 
 
@@ -405,6 +403,7 @@ class JSGameKey {
             this.Tick();
 
             this.Down = true;
+            this.Pressed = true;
         }
     }
 
@@ -1246,21 +1245,23 @@ class TestBullet extends JSGameObject {
 }
 
 class MyPlane extends JSGameObject {
+    #MoveVector = [];
     constructor() {
         super("PlayerPlane");
         this.MoveSpeed = 1;
         this.SetCollisionBody(new JSGameBoxCollider(this.transform));
-
         this.Shot = {
             Delay: 150,
             Time: 0
         }
+        this.#MoveVector = [0,0];
     }
+
+
     Draw(JSWebCamera) {
         GameShape.Square.setColour([1,1,1,1]);
         GameShape.Square.Texture.setAsImage(GameSprite.Player.Ship);
         GameShape.Square.draw(JSWebCamera,this.transform);
-
         this.transform.scale = [30, 30, 1]
     }
 
@@ -1286,8 +1287,24 @@ class MyPlane extends JSGameObject {
             this.transform.position[0] += JoyStick.MoveX * DeltaTime / 2 * this.MoveSpeed;
             this.transform.position[1] += JoyStick.MoveY * DeltaTime / 2 * this.MoveSpeed;
         }
+        else
+        {
+            if (KeyInput.GetKey("w").Pressed){
+                this.transform.position[1] += 1 * DeltaTime / 2 * this.MoveSpeed;
+            }
+            else if (KeyInput.GetKey("s").Pressed){
+                this.transform.position[1] -= 1 * DeltaTime / 2 * this.MoveSpeed;
+            }
 
-        if (TouchInput.touch[1].isPressed){
+            if (KeyInput.GetKey("a").Pressed){
+                this.transform.position[0] -= 1 * DeltaTime / 2 * this.MoveSpeed;
+            }
+            else if (KeyInput.GetKey("d").Pressed){
+                this.transform.position[0] += 1 * DeltaTime / 2 * this.MoveSpeed;
+            }
+        }
+
+        if (TouchInput.touch[1].isPressed || KeyInput.GetKey("j").Pressed){
             if (this.Shot.Time <= 0) {
                 let newBullet = new TestBullet([
                     this.transform.position[0],
@@ -1345,11 +1362,15 @@ function loop() {
         console.log("KeyUp");
     }
 
+
+    if (MouseInput.Button[0].Down){
+        console.log(`Mouse Down Press`);
+    }
     myCamera.Size = [testCanvas.width, testCanvas.height];
     myCamera.transform.position = [0, 0, 20];
 
     MyTestScene.Tick();
-    MainWebGlContext.clear([0, 0, 1, 1]);
+    MainWebGlContext.clear([0.2, 0.2, 0.2, 1]);
     MyTestScene.Draw();
 
     window.requestAnimationFrame(() => {
