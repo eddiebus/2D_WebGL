@@ -210,6 +210,12 @@ class JSGameTouchInput {
             this.touch.push(new JSGameTouch(i, this._targetElement));
         }
     }
+
+    GetTouch(touchIndex){
+        if (touchIndex < 0 || touchIndex > this.touch.length) {
+        }
+        return this.touch[touchIndex];
+    }
 }
 
 // Representation on mouse button
@@ -280,7 +286,9 @@ class JSGameMouseButton {
 
 // Mouse input handler
 class JSGameMouseInput {
-    constructor(HTMLElement,) {
+    #TargetElement = null;
+    #MoveFrames = 0;
+    constructor(HTMLElement) {
         let MouseButton = {
             Down: false,
             Up: false
@@ -292,28 +300,20 @@ class JSGameMouseInput {
             this.Button.push(new JSGameMouseButton(HTMLElement,i));
         }
 
-        this._endPos = [0, 0];
-        this._lastPos = [0, 0];
-        this.Pos = [];
+        this.position = [0, 0];
         this.moveDelta = [0, 0];
-        this._targetElemet = HTMLElement;
-        this.locked = false;
-        this._MoveFrames = 0;
-
-
-
+        this.#TargetElement = HTMLElement;
+        this.#MoveFrames = 0;
         window.addEventListener("mousemove", (event) => {
             this.#Move(event)
         })
-
         window.requestAnimationFrame((time) => {
             this._Tick();
         })
     }
 
     #Move(event) {
-        let rect = this._targetElemet.getBoundingClientRect();
-
+        let rect = this.#TargetElement.getBoundingClientRect();
         let x = event.pageX - rect.left;
         let y = event.pageY - rect.top;
         if (x > rect.width) {
@@ -321,21 +321,15 @@ class JSGameMouseInput {
         } else if (x < 0) {
             x = 0;
         }
-
         if (y > rect.height) {
             y = rect.height;
         } else if (y < 0) {
             y = 0;
         }
 
-
-        this._endPos = [x, rect.height - y];
+        this.position = [x, rect.height - y];
         this.moveDelta = [event.movementX, -event.movementY];
-
-        this._lastPos = this._endPos;
-
     }
-
     _Tick() {
         let fsElement = document.fullscreenElement;
         if (fsElement == this._targetElemet) {
@@ -349,7 +343,7 @@ class JSGameMouseInput {
             this._MoveFrames = 0;
             this.moveDelta = [0, 0];
         }
-        this.Pos = [...this._endPos];
+        this.Pos = [...this.position];
         window.requestAnimationFrame((time) => {
             this._Tick();
         })
@@ -480,14 +474,13 @@ class JSGameKeyInput {
         }
 
     }
-
+    
     DebugLogKeys() {
         console.log("Keys: ");
         for (let i = 0; i < this.Keys.length; i++) {
             console.log(this.Keys[i].value);
         }
     }
-
     _GetKeyIndex(keyString) {
         let returnIndex = -1;
         for (let i = 0; i < this.Keys.length; i++) {
@@ -511,6 +504,18 @@ class JSGameKeyInput {
     }
 }
 
+// Combined Input Handler for Mouse,Keyboard and Touch
+class JSGameInput{
+    #TouchHandler = null;
+    #KeyboardHandler = null;
+    #MouseHandler = null;
+    constructor(HTMLElement) {
+        this.#TouchHandler = new JSGameTouchInput(HTMLElement);
+        this.#KeyboardHandler = new JSGameKeyInput();
+        this.#MouseHandler = new JSGameMouseInput(HTMLElement);
+    }
+}
+
 class JSGameCollider {
     constructor(ParentTransform, MatterJSBody, IsStatic = true) {
         this.TransformTarget = ParentTransform;
@@ -521,7 +526,6 @@ class JSGameCollider {
         if (this.Body) {
             Matter.Body.setPosition(this.Body, {x: 0, y: 0});
         }
-
     }
 
     SetTransform(newTransform){
