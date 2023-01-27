@@ -521,11 +521,11 @@ class JSGameCollider {
         this.TransformTarget = ParentTransform;
         this.Tansform = new Transform();
         this.Static = IsStatic;
+        this.InitBody = MatterJSBody;
         this.Body = null;
-        this.Body = MatterJSBody;
-        if (this.Body) {
-            Matter.Body.setPosition(this.Body, {x: 0, y: 0});
-        }
+
+
+        this.#SetToSize();
     }
 
     SetTransform(newTransform){
@@ -534,61 +534,38 @@ class JSGameCollider {
         }
     }
 
+    #SetToSize(){
+        this.Body = null;
+        this.Body = Matter.Bodies.fromVertices(
+            0,0,
+            this.InitBody.vertices
+        )
+
+        Matter.Body.scale(
+            this.Body,
+            this.TransformTarget.scale[0],
+            this.TransformTarget.scale[1]
+        );
+
+        Matter.Body.setPosition(
+            this.Body,
+            {
+                x: this.TransformTarget.position[0],
+                y: this.TransformTarget.position[1]
+            }
+        )
+    }
+
     Check(OtherCollider,Transform) {
-        function BodyToScale(Body,Transform){
-            let sizeScale = 2;
-            let sizeX = Transform.scale[0] * sizeScale;
-            let sizeY = Transform.scale[0] * sizeScale;
-            Matter.Body.scale(Body,
-                sizeX,
-                sizeY
-            );
-
-            Matter.Body.setPosition(
-                Body,
-                {
-                    x: Transform.position[0],
-                    y: Transform.position[1]
-                }
-            )
-
-            Matter.Body.setAngle(Body,
-                DegToRadians(Transform.rotation[2])
-            );
-        }
-        function ResetBodyScale(Body,Transform){
-            let sizeScale = 2;
-            let sizeX = Transform.scale[0] * sizeScale;
-            let sizeY = Transform.scale[0] * sizeScale;
-            Matter.Body.scale(Body,
-                1/sizeX,
-                1/sizeY
-            );
-
-            Matter.Body.setPosition(
-                Body,
-                {
-                    x: 0,
-                    y: 0
-                }
-            )
-
-            Matter.Body.setAngle(Body,
-                0);
-        }
-
         if (!OtherCollider instanceof JSGameCollider) {
             return;
         }
-        this.#SetBodyToWorldSize();
-        OtherCollider.#SetBodyToWorldSize();
 
-        let CollisionEvent = Matter.Query.collides(this.Body, [OtherCollider.Body]);
+        this.#SetToSize();
+        let otherBody = Matter.Common.clone(OtherCollider.Body,false);
+        let CollisionEvent = Matter.Query.collides(this.Body,[otherBody]);
 
-        this.#ResetBodyFromWorldSize();
-        OtherCollider.#ResetBodyFromWorldSize();
-
-        if (CollisionEvent.length > 0) {
+        if (CollisionEvent) {
             return CollisionEvent[0];
         } else {
             return null;
@@ -598,7 +575,7 @@ class JSGameCollider {
     //Set Body to World size based on transform
     //Used by Check function
     #SetBodyToWorldSize(){
-        let sizeScale = 2;
+        let sizeScale = 1;
         let sizeX = this.TransformTarget.scale[0] * sizeScale;
         let sizeY = this.TransformTarget.scale[0] * sizeScale;
         Matter.Body.scale(this.Body,
@@ -622,9 +599,9 @@ class JSGameCollider {
     //Reset Body after it is set to world size
     //Since Body Scale Function does not reset.
     #ResetBodyFromWorldSize(){
-        let sizeScale = 2;
+        let sizeScale = 1;
         let sizeX = this.TransformTarget.scale[0] * sizeScale;
-        let sizeY = this.TransformTarget.scale[0] * sizeScale;
+        let sizeY = this.TransformTarget.scale[1] * sizeScale;
         Matter.Body.scale(this.Body,
             1/sizeX,
             1/sizeY
@@ -645,7 +622,7 @@ class JSGameCollider {
 
 class JSGameBoxCollider extends JSGameCollider{
     constructor(ParentTransform,SizeVector = [1,1],IsStatic = true) {
-        super(ParentTransform,Matter.Bodies.rectangle(0,0,SizeVector[0],SizeVector[1]),IsStatic);
+        super(ParentTransform,Matter.Bodies.rectangle(0,0,SizeVector[0] * 2 ,SizeVector[1] * 2),IsStatic);
     }
 }
 
@@ -684,6 +661,7 @@ class JSGameObject {
         this.LayerCollideIgnore = [] //Layers to Ignore Collision
         this.#SceneList = null;
 
+        // Start Collision Events
         this.#GenerateCollisionEvents();
     }
 
@@ -713,7 +691,7 @@ class JSGameObject {
 
         let ColEvent = this.Collider.Check(otherObject.Collider);
         if (ColEvent != null) {
-            //console.log(`Hit! ${ColEvent.collided}`);
+            console.log(`Hit! ${ColEvent.collided}`);
         }
     }
 
@@ -1205,7 +1183,7 @@ class SpinBox extends JSGameObject {
     }
 
     Tick(DeltaTime) {
-        this.transform.position = [0, 0, -10];
+        this.transform.position = [0, 0, 0];
         this.transform.scale = [100, 100, 1];
         this.transform.rotation[2] = DeltaTime/200;
     }
@@ -1337,6 +1315,7 @@ class TestScene extends JSGameScene {
         //this.Add(new SpinBox());
         this.Add(new MyPlane());
         this.Add(new UI_MoveJoystick());
+        this.Add(new SpinBox());
     }
 
     Tick() {
