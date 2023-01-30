@@ -643,6 +643,7 @@ class JSGameObject {
     #CollisionStayObj = []
     #CollisionExitObj = []
     #SceneList = null;
+    #MatterBody = null;
 
     constructor(name = "NullObject", options = {
         LayerName: "DefaultLayer",
@@ -680,18 +681,53 @@ class JSGameObject {
         }
     }
 
+    SetMatterBody(newBody){
+        this.#MatterBody = newBody;
+    }
+
+    GetMatterBody(){
+        if (!this.#MatterBody){
+            return null;
+        }
+        let copyBody = Matter.Bodies.fromVertices(0,0,this.#MatterBody.vertices);
+        Matter.Body.setPosition(
+            copyBody,
+            {
+                x: this.transform.position[0],
+                y: this.transform.position[1]
+            }
+        );
+        Matter.Body.setAngle(
+            copyBody,
+            this.transform.rotation[2]
+        );
+
+        Matter.Body.scale(
+            copyBody,
+            this.transform.scale[0] * 2,
+            this.transform.scale[1] * 2
+        )
+        return copyBody;
+    }
+
     CollisionCheck(otherObject) {
-        if (!otherObject instanceof JSGameObject) {
-            return;
-        }
-        if (!this.Collider || !otherObject.Collider) {
-            return;
+        let thisBody = this.GetMatterBody();
+        let otherBody = otherObject.GetMatterBody();
+
+        if (!thisBody || !otherBody){
+            return null;
         }
 
+        let colEvent = Matter.Query.collides(
+            thisBody,
+            [otherBody]
+        );
 
-        let ColEvent = this.Collider.Check(otherObject.Collider);
-        if (ColEvent != null) {
-            console.log(`Hit! ${ColEvent.collided}`);
+        if (colEvent.length > 0){
+            return colEvent[0];
+        }
+        else{
+            return null;
         }
     }
 
@@ -704,7 +740,11 @@ class JSGameObject {
         let ObjectList = this.SceneList;
         for (let obj in ObjectList){
             if (this != ObjectList[obj]){
-                this.CollisionCheck(ObjectList[obj]);
+                let hit = this.CollisionCheck(ObjectList[obj]);
+                if (hit){
+                    console.log(`Hit! Between ${this.name} and ${ObjectList[obj].name}`);
+                }
+
             }
         }
 
@@ -1177,7 +1217,10 @@ class SpinBox extends JSGameObject {
     constructor() {
         super("SpinBox");
         this.Collider = new JSGameBoxCollider(this.transform);
-
+        this.SetMatterBody(Matter.Bodies.rectangle(
+            0,0,
+            1,1
+        ));
         this.Mesh = new JSWebGlSquare(MainWebGlContext, MainShaderContext, [1, 1, 1, 1]);
         this.Mesh.transform.SetParent(this.transform);
     }
@@ -1196,13 +1239,14 @@ class SpinBox extends JSGameObject {
 
 class TestBullet extends JSGameObject {
     constructor(startPos = [0,0,0]) {
-        super("SpinBox");
-        this.Collider = new JSGameBoxCollider(this.transform);
+        super("Bullet");
+        this.SetMatterBody(Matter.Bodies.rectangle(
+            0,0,1,1
+        ))
 
         this.transform.position[0] = startPos[0];
         this.transform.position[1] = startPos[1];
         this.transform.position[2] = startPos[2];
-
         this.TimeAlive = 0;
     }
 
@@ -1231,7 +1275,10 @@ class MyPlane extends JSGameObject {
     constructor() {
         super("PlayerPlane");
         this.MoveSpeed = 1;
-        this.SetCollisionBody(new JSGameBoxCollider(this.transform));
+        this.SetMatterBody(Matter.Bodies.rectangle(
+            0,0,
+            1,1
+        ));
         this.Shot = {
             Delay: 150,
             Time: 0
