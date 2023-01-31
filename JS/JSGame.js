@@ -464,7 +464,6 @@ class JSGameKeyInput {
             }
         })
     }
-
     GetKey(keyName) {
         let index = this._GetKeyIndex(keyName);
         if (index != null) {
@@ -474,7 +473,6 @@ class JSGameKeyInput {
         }
 
     }
-    
     DebugLogKeys() {
         console.log("Keys: ");
         for (let i = 0; i < this.Keys.length; i++) {
@@ -495,8 +493,6 @@ class JSGameKeyInput {
             return null;
         }
     }
-
-
     _AddKeyDownEvent(keyEvent) {
         if (!this._GetKeyIndex(keyEvent.key)) {
             this.Keys.push(new JSGameKey(keyEvent.key, true, true));
@@ -737,6 +733,28 @@ class JSGameObject {
                 //Add to Enter or Stay
             }
         }
+
+        function RemoveFromList(targetObj,searchList){
+
+            let objRemoved = 0;
+
+            if (searchList.constructor != Array){
+                console.log("Warning obj is not of list");
+                return 0;
+            }
+            else{
+                for (let obj = 0; obj < searchList.length; obj++){
+                    if (searchList[obj] == targetObj){
+                        searchList = searchList.splice(obj,1);
+                        obj = 0;
+                    }
+                }
+            }
+
+            return objRemoved;
+        }
+
+
         let ObjectList = this.SceneList;
         for (let obj in ObjectList){
             if (this != ObjectList[obj]){
@@ -744,11 +762,22 @@ class JSGameObject {
                 if (hit){
                     console.log(`Hit! Between ${this.name} and ${ObjectList[obj].name}`);
                 }
-
             }
         }
 
         window.requestAnimationFrame(()=>{this.#GenerateCollisionEvents()});
+    }
+
+    OnObjectEnter(){
+
+    }
+
+    OnObjectStay(){
+
+    }
+
+    OnObjectExit(){
+
     }
 
     Draw(JSWebGlCamera) {
