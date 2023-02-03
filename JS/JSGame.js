@@ -654,27 +654,12 @@ class JSGameObject {
 
         this.ParentObject = null;
         this.ChildObject = []; //Child Objects of this Object
-        this.Collider = null;
-        this.LayerCollideIgnore = [] //Layers to Ignore Collision
         this.#SceneList = null;
-
         // Start Collision Events
         this.#GenerateCollisionEvents();
     }
 
     Tick(DeltaTime) {
-    }
-
-    #UpdateColliderBody(){
-        if (this.Collider){
-            this.Collider.TransformTarget = this.transform;
-        }
-    }
-
-    SetCollisionBody(newBody){
-        if (newBody instanceof JSGameCollider) {
-            this.Collider = newBody;
-        }
     }
 
     SetMatterBody(newBody){
@@ -728,56 +713,25 @@ class JSGameObject {
     }
 
     #GenerateCollisionEvents(){
-        function AddColEvent(Object,CollResult){
-            if (CollResult){
-                //Add to Enter or Stay
-            }
-        }
+        // Check existing events
 
-        function RemoveFromList(targetObj,searchList){
-
-            let objRemoved = 0;
-
-            if (searchList.constructor != Array){
-                console.log("Warning obj is not of list");
-                return 0;
-            }
-            else{
-                for (let obj = 0; obj < searchList.length; obj++){
-                    if (searchList[obj] == targetObj){
-                        searchList = searchList.splice(obj,1);
-                        obj = 0;
-                    }
-                }
-            }
-
-            return objRemoved;
-        }
-
+        // All Collision in Scene
+        let Collisions = [];
 
         let ObjectList = this.SceneList;
         for (let obj in ObjectList){
             if (this != ObjectList[obj]){
-                let hit = this.CollisionCheck(ObjectList[obj]);
+                let otherObj = ObjectList[obj];
+
+                let hit = this.CollisionCheck(otherObj);
                 if (hit){
-                    console.log(`Hit! Between ${this.name} and ${ObjectList[obj].name}`);
+                    Collisions.push(otherObj);
+                    console.log(`Hit! Between ${this.name} and ${otherObj.name}`);
                 }
             }
         }
 
         window.requestAnimationFrame(()=>{this.#GenerateCollisionEvents()});
-    }
-
-    OnObjectEnter(){
-
-    }
-
-    OnObjectStay(){
-
-    }
-
-    OnObjectExit(){
-
     }
 
     Draw(JSWebGlCamera) {
@@ -832,7 +786,7 @@ class JSGameObject {
         let index = this.FindObjSceneIndex(this);
         if (index != null){
             this.SceneList.splice(index,1);
-            this.SetSceneList(null);
+            this.#SceneList = null;
         }
 
         for (let obj in this.ChildObject){
@@ -889,12 +843,9 @@ class JSGameObject {
                     this.ParentObject = otherObject;
                     this.transform.parentTransform = otherObject.transform;
 
-                    // Put self in same scene as parent.
-                    let rootObj = this.GetRootObject();
-                    this.AddToSceneList(rootObj.SceneList);
                 }
             }
-        // Set Parent to Nothign/Null
+        // Set Parent to Null
         } else {
             this.#RemoveSelfFromParent();
         }
@@ -905,19 +856,12 @@ class JSGameObject {
             return;
         }
         else{
+            this.#RemoveSelfFromScene();
             NewList.push(this);
             this.SceneList = NewList;
         }
     }
 
-    // Set The Scene List
-    SetSceneList(newList){
-        this.SceneList = newList;
-
-        if (this.FindObjSceneIndex(this) == null){
-            this.SceneList = [];
-        }
-    }
 
     // Find Object in Scene List
     // Returns Index Pos
@@ -979,21 +923,51 @@ class JSGameScene extends JSGameObject {
     Tick() {
         let Objects = this.SceneList;
         for (let i = 0; i < Objects.length; i++) {
-            Objects[i].Tick(Time.deltaTime);
-        }
+            let objs = [Objects[i]];
+            let children = objs[0].GetAllChildObjects();
+            for (let i in children){
+                objs.push(children[i]);
+            }
 
+            for (let i in objs){
+                objs[i].Tick(Time.deltaTime);
+            }
+        }
         this.#CollisionCheckObjs();
     }
+
 
     Draw(JSWebGlCamera) {
         MainWebGlContext.clear();
         let Objects = this.SceneList;
         Objects = this.SortObjectsByDepth(Objects);
         for (let i = 0; i < Objects.length; i++) {
-            Objects[i].Draw(JSWebGlCamera);
+            let objs = [Objects[i]];
+            let children = objs[0].GetAllChildObjects();
+
+            for (let i in children){
+                objs.push(children[i]);
+            }
+
+            for (let i in objs){
+                objs[i].Tick(JSWebGlCamera);
+            }
         }
     }
 
+
+    GetAllObjects(){
+        let returnList = [];
+        for (let i in this.SceneList){
+            returnList.push(this.SceneList[i]);
+            let children = this.SceneList[i].GetAllChildObjects();
+            for (let c in children){
+                returnList.push(children[c]);
+            }
+        }
+
+        return returnList;
+    }
     #CollisionCheckObjs() {
         let Objects = this.SceneList;
         for (let i = 0; i < Objects.length; i++) {
@@ -1008,7 +982,7 @@ class JSGameScene extends JSGameObject {
 
     GroupObjectsByLayer() {
         let ResultArray = []
-        let Objects = this.SceneList;
+        let Objects = this.GetAllObjects();
         for (let i = 0; i < Objects.length; i++) {
             let LayerMatchIndex = null;
 
@@ -1036,7 +1010,7 @@ class JSGameScene extends JSGameObject {
         return ResultArray;
     }
 
-    SortObjectsByDepth(JSWebGlCamera, ObjectList = this.SceneList) {
+    SortObjectsByDepth(JSWebGlCamera, ObjectList = this.GetAllObjects()) {
         if (!JSWebGlCamera) {
             console.warn("GameObject: SortObjectByDepth, no camera given");
             return [];
@@ -1242,9 +1216,9 @@ class UI_MoveJoystick extends JSGameObject {
     }
 }
 
-class SpinBox extends JSGameObject {
+class SomeBox extends JSGameObject {
     constructor() {
-        super("SpinBox");
+        super("SomeBox");
         this.Collider = new JSGameBoxCollider(this.transform);
         this.SetMatterBody(Matter.Bodies.rectangle(
             0,0,
@@ -1255,13 +1229,15 @@ class SpinBox extends JSGameObject {
     }
 
     Tick(DeltaTime) {
-        this.transform.position = [0, 0, 0];
-        this.transform.scale = [100, 100, 1];
-        this.transform.rotation[2] = DeltaTime/200;
+        this.transform.position = [10, 0, 0];
+        this.transform.scale = [1, 1, 1];
+        this.transform.rotation[2] = 0;
     }
 
     Draw(JSWebGlCamera) {
-        this.Mesh.draw(JSWebGlCamera,this.transform);
+        GameShape.Square.setColour([1,1,1,1]);
+        GameShape.Square.Texture.clear([1,1,1,1]);
+        GameShape.Square.draw(JSWebGlCamera,this.transform);
     }
 
 }
@@ -1313,8 +1289,8 @@ class MyPlane extends JSGameObject {
             Time: 0
         }
         this.#MoveVector = [0,0];
+        
     }
-
 
     Draw(JSWebCamera) {
         GameShape.Square.setColour([1,1,1,1]);
@@ -1386,21 +1362,15 @@ class TestScene extends JSGameScene {
         super();
         this.Camera = new JSWebGlUICamera(MainWebGlContext);
 
-
-
-        //this.Add(new SpinBox());
+        //this.Add(new SomeBox());
         this.Add(new MyPlane());
         this.Add(new UI_MoveJoystick());
-        this.Add(new SpinBox());
     }
 
     Tick() {
         super.Tick();
-        //console.log(`Object Count = ${this.SceneList.length}\n`);
-        //console.log(`FPS  = ${1000 / Time.deltaTime}\n`);
         this.Camera.transform.position = [0, 0, 10];
     }
-
     Draw(JSWebGlCamera = this.Camera) {
         for (let object of this.SortObjectsByDepth(this.Camera)) {
             object.Draw(JSWebGlCamera);
