@@ -1380,6 +1380,12 @@ class MyPlane extends JSGameObject {
         this.transform.position[2] = -10;
         this.transform.scale = [30, 30, 1];
     }
+
+    OnObjectStay(CollisionEvent) {
+        let penetration = CollisionEvent.info.penetration;
+        this.transform.position[0] += penetration.x;
+        this.transform.position[1] += penetration.y;
+    }
 }
 
 MainWebGlContext.setCanFullScreen(true);
