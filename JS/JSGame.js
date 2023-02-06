@@ -109,8 +109,7 @@ class JSGameTouch {
 
         if (!myTouch) {
             return;
-        } else
-        {
+        } else {
             this._targetElementRect = this._targetElement.getBoundingClientRect();
 
             let x = myTouch.pageX - this._targetElementRect.left;
@@ -191,9 +190,9 @@ class JSGameTouch {
 
     // Print Contents of Self to console
     // Keep it readable
-    ConsoleLogSelf(){
+    ConsoleLogSelf() {
         console.log(
-        `Touch Event:
+            `Touch Event:
         EndPosition: ${this.endPos},
         StartPosition: ${this.startPos},
         MoveDelta: ${this.moveDelta}`)
@@ -211,7 +210,7 @@ class JSGameTouchInput {
         }
     }
 
-    GetTouch(touchIndex){
+    GetTouch(touchIndex) {
         if (touchIndex < 0 || touchIndex > this.touch.length) {
         }
         return this.touch[touchIndex];
@@ -220,7 +219,7 @@ class JSGameTouchInput {
 
 // Representation on mouse button
 class JSGameMouseButton {
-    constructor(TargetElement,ButtonID) {
+    constructor(TargetElement, ButtonID) {
         this.ParentElement = TargetElement;
         this.ButtonID = ButtonID;
         this.Down = false;
@@ -241,22 +240,20 @@ class JSGameMouseButton {
         this._Tick();
     }
 
-    _RespondToMouseDownEvent(event){
-        if (event.button != this.ButtonID){
+    _RespondToMouseDownEvent(event) {
+        if (event.button != this.ButtonID) {
             return
-        }
-        else{
+        } else {
             this.Down = true;
             this.Pressed = true;
             this.Frames = 0;
         }
     }
 
-    _RespondToMouseUpEvent(event){
-        if (event.button != this.ButtonID){
+    _RespondToMouseUpEvent(event) {
+        if (event.button != this.ButtonID) {
             return
-        }
-        else{
+        } else {
             this.Down = false;
             this.Pressed = false;
             this.Up = true;
@@ -264,21 +261,20 @@ class JSGameMouseButton {
         }
     }
 
-    _Reset(){
-        if (this.Down){
+    _Reset() {
+        if (this.Down) {
             this.Down = false;
-        }
-        else if (this.Up){
+        } else if (this.Up) {
             this.Up = false;
         }
     }
 
-    _Tick(){
+    _Tick() {
         this.Frames += 1;
-        if (this.Frames >= 2){
+        if (this.Frames >= 2) {
             this._Reset();
         }
-        window.requestAnimationFrame(() =>{
+        window.requestAnimationFrame(() => {
             this._Tick()
         })
     }
@@ -288,6 +284,7 @@ class JSGameMouseButton {
 class JSGameMouseInput {
     #TargetElement = null;
     #MoveFrames = 0;
+
     constructor(HTMLElement) {
         let MouseButton = {
             Down: false,
@@ -296,8 +293,8 @@ class JSGameMouseInput {
 
         //Button object for l-click, r-click and middle click
         this.Button = [];
-        for (let i = 0; i < 3; i++){
-            this.Button.push(new JSGameMouseButton(HTMLElement,i));
+        for (let i = 0; i < 3; i++) {
+            this.Button.push(new JSGameMouseButton(HTMLElement, i));
         }
 
         this.position = [0, 0];
@@ -330,6 +327,7 @@ class JSGameMouseInput {
         this.position = [x, rect.height - y];
         this.moveDelta = [event.movementX, -event.movementY];
     }
+
     _Tick() {
         let fsElement = document.fullscreenElement;
         if (fsElement == this._targetElemet) {
@@ -349,7 +347,7 @@ class JSGameMouseInput {
         })
     }
 
-    ConsoleLog(){
+    ConsoleLog() {
         console.log(
             `Mouse:
             MoveDelta: ${this.moveDelta}
@@ -401,9 +399,9 @@ class JSGameKey {
         }
     }
 
-    _RespondToKeyDownEvent(event){
+    _RespondToKeyDownEvent(event) {
         // Check if our key and not repeating
-        if (event.key != this.Name || event.repeat == true){
+        if (event.key != this.Name || event.repeat == true) {
             return;
         }
         this.Down = true;
@@ -411,8 +409,8 @@ class JSGameKey {
         this._Frames = 1;
     }
 
-    _RespondToKeyUpEvent(event){
-        if (event.key != this.Name){
+    _RespondToKeyUpEvent(event) {
+        if (event.key != this.Name) {
             return;
         }
         this.Up = true;
@@ -421,12 +419,10 @@ class JSGameKey {
     }
 
     // Reset flags
-    _Reset(){
-        if (this.Down == true){
+    _Reset() {
+        if (this.Down == true) {
             this.Down = false;
-        }
-
-        else if (this.Up){
+        } else if (this.Up) {
             this.Up = false;
             this.Pressed = false;
         }
@@ -438,10 +434,12 @@ class JSGameKey {
             this._Reset();
         }
 
-        window.requestAnimationFrame(() => {this.Tick()})
+        window.requestAnimationFrame(() => {
+            this.Tick()
+        })
     }
 
-    ConsoleLogSelf(){
+    ConsoleLogSelf() {
         console.log(
             `Keyboard Key:
             Name: ${this.Name}
@@ -464,6 +462,7 @@ class JSGameKeyInput {
             }
         })
     }
+
     GetKey(keyName) {
         let index = this._GetKeyIndex(keyName);
         if (index != null) {
@@ -473,12 +472,14 @@ class JSGameKeyInput {
         }
 
     }
+
     DebugLogKeys() {
         console.log("Keys: ");
         for (let i = 0; i < this.Keys.length; i++) {
             console.log(this.Keys[i].value);
         }
     }
+
     _GetKeyIndex(keyString) {
         let returnIndex = -1;
         for (let i = 0; i < this.Keys.length; i++) {
@@ -493,6 +494,7 @@ class JSGameKeyInput {
             return null;
         }
     }
+
     _AddKeyDownEvent(keyEvent) {
         if (!this._GetKeyIndex(keyEvent.key)) {
             this.Keys.push(new JSGameKey(keyEvent.key, true, true));
@@ -501,10 +503,11 @@ class JSGameKeyInput {
 }
 
 // Combined Input Handler for Mouse,Keyboard and Touch
-class JSGameInput{
+class JSGameInput {
     #TouchHandler = null;
     #KeyboardHandler = null;
     #MouseHandler = null;
+
     constructor(HTMLElement) {
         this.#TouchHandler = new JSGameTouchInput(HTMLElement);
         this.#KeyboardHandler = new JSGameKeyInput();
@@ -524,16 +527,16 @@ class JSGameCollider {
         this.#SetToSize();
     }
 
-    SetTransform(newTransform){
-        if (newTransform instanceof Transform){
+    SetTransform(newTransform) {
+        if (newTransform instanceof Transform) {
             this.Tansform = newTransform;
         }
     }
 
-    #SetToSize(){
+    #SetToSize() {
         this.Body = null;
         this.Body = Matter.Bodies.fromVertices(
-            0,0,
+            0, 0,
             this.InitBody.vertices
         )
 
@@ -552,14 +555,14 @@ class JSGameCollider {
         )
     }
 
-    Check(OtherCollider,Transform) {
+    Check(OtherCollider, Transform) {
         if (!OtherCollider instanceof JSGameCollider) {
             return;
         }
 
         this.#SetToSize();
-        let otherBody = Matter.Common.clone(OtherCollider.Body,false);
-        let CollisionEvent = Matter.Query.collides(this.Body,[otherBody]);
+        let otherBody = Matter.Common.clone(OtherCollider.Body, false);
+        let CollisionEvent = Matter.Query.collides(this.Body, [otherBody]);
 
         if (CollisionEvent) {
             return CollisionEvent[0];
@@ -570,14 +573,14 @@ class JSGameCollider {
 
     //Set Body to World size based on transform
     //Used by Check function
-    #SetBodyToWorldSize(){
+    #SetBodyToWorldSize() {
         let sizeScale = 1;
         let sizeX = this.TransformTarget.scale[0] * sizeScale;
         let sizeY = this.TransformTarget.scale[0] * sizeScale;
         Matter.Body.scale(this.Body,
             sizeX,
             sizeY
-            );
+        );
 
         Matter.Body.setPosition(
             this.Body,
@@ -594,13 +597,13 @@ class JSGameCollider {
 
     //Reset Body after it is set to world size
     //Since Body Scale Function does not reset.
-    #ResetBodyFromWorldSize(){
+    #ResetBodyFromWorldSize() {
         let sizeScale = 1;
         let sizeX = this.TransformTarget.scale[0] * sizeScale;
         let sizeY = this.TransformTarget.scale[1] * sizeScale;
         Matter.Body.scale(this.Body,
-            1/sizeX,
-            1/sizeY
+            1 / sizeX,
+            1 / sizeY
         );
 
         Matter.Body.setPosition(
@@ -616,20 +619,20 @@ class JSGameCollider {
     }
 }
 
-class JSGameBoxCollider extends JSGameCollider{
-    constructor(ParentTransform,SizeVector = [1,1],IsStatic = true) {
-        super(ParentTransform,Matter.Bodies.rectangle(0,0,SizeVector[0] * 2 ,SizeVector[1] * 2),IsStatic);
+class JSGameBoxCollider extends JSGameCollider {
+    constructor(ParentTransform, SizeVector = [1, 1], IsStatic = true) {
+        super(ParentTransform, Matter.Bodies.rectangle(0, 0, SizeVector[0] * 2, SizeVector[1] * 2), IsStatic);
     }
 }
 
-class JSGameCircleCollider extends JSGameCollider{
+class JSGameCircleCollider extends JSGameCollider {
     constructor(
-        ParentTransform,Radius = 0.5,IsStatic = true
+        ParentTransform, Radius = 0.5, IsStatic = true
     ) {
-        super(ParentTransform,Matter.Bodies.circle(
-            0,0,
+        super(ParentTransform, Matter.Bodies.circle(
+            0, 0,
             Radius
-        ),IsStatic);
+        ), IsStatic);
     }
 }
 
@@ -655,22 +658,20 @@ class JSGameObject {
         this.ParentObject = null;
         this.ChildObject = []; //Child Objects of this Object
         this.#SceneList = null;
-        // Start Collision Events
-        this.#GenerateCollisionEvents();
     }
 
     Tick(DeltaTime) {
     }
 
-    SetMatterBody(newBody){
+    SetMatterBody(newBody) {
         this.#MatterBody = newBody;
     }
 
-    GetMatterBody(){
-        if (!this.#MatterBody){
+    GetMatterBody() {
+        if (!this.#MatterBody) {
             return null;
         }
-        let copyBody = Matter.Bodies.fromVertices(0,0,this.#MatterBody.vertices);
+        let copyBody = Matter.Bodies.fromVertices(0, 0, this.#MatterBody.vertices);
         Matter.Body.setPosition(
             copyBody,
             {
@@ -695,7 +696,7 @@ class JSGameObject {
         let thisBody = this.GetMatterBody();
         let otherBody = otherObject.GetMatterBody();
 
-        if (!thisBody || !otherBody){
+        if (!thisBody || !otherBody) {
             return null;
         }
 
@@ -704,35 +705,13 @@ class JSGameObject {
             [otherBody]
         );
 
-        if (colEvent.length > 0){
+        if (colEvent.length > 0) {
             return colEvent[0];
-        }
-        else{
+        } else {
             return null;
         }
     }
 
-    #GenerateCollisionEvents(){
-        // Check existing events
-
-        // All Collision in Scene
-        let Collisions = [];
-
-        let ObjectList = this.SceneList;
-        for (let obj in ObjectList){
-            if (this != ObjectList[obj]){
-                let otherObj = ObjectList[obj];
-
-                let hit = this.CollisionCheck(otherObj);
-                if (hit){
-                    Collisions.push(otherObj);
-                    console.log(`Hit! Between ${this.name} and ${otherObj.name}`);
-                }
-            }
-        }
-
-        window.requestAnimationFrame(()=>{this.#GenerateCollisionEvents()});
-    }
 
     Draw(JSWebGlCamera) {
     }
@@ -773,23 +752,25 @@ class JSGameObject {
         return returnArray;
     }
 
-    GetRootObject(){
+    GetRootObject() {
         let root = this;
-        while (root.ParentObject){
+        while (root.ParentObject) {
             root = root.ParentObject;
         }
         return root;
     }
 
-    #RemoveSelfFromScene(){
-        if (!this.SceneList) { return;}
+    #RemoveSelfFromScene() {
+        if (!this.SceneList) {
+            return;
+        }
         let index = this.FindObjSceneIndex(this);
-        if (index != null){
-            this.SceneList.splice(index,1);
+        if (index != null) {
+            this.SceneList.splice(index, 1);
             this.#SceneList = null;
         }
 
-        for (let obj in this.ChildObject){
+        for (let obj in this.ChildObject) {
             // Remove Child Objects from scene
             this.ChildObject[obj].#RemoveSelfFromScene();
         }
@@ -813,7 +794,7 @@ class JSGameObject {
     }
 
     SetParent(otherObject) {
-        if (otherObject != null && !otherObject instanceof  JSGameObject){
+        if (otherObject != null && !otherObject instanceof JSGameObject) {
             return;
         }
         if (otherObject != null) {
@@ -845,42 +826,45 @@ class JSGameObject {
 
                 }
             }
-        // Set Parent to Null
+            // Set Parent to Null
         } else {
             this.#RemoveSelfFromParent();
         }
     }
 
-    AddToSceneList(NewList){
-        if (this.SceneList == NewList){
+    AddToSceneList(NewList) {
+        if (this.SceneList == NewList) {
             return;
-        }
-        else{
+        } else {
             this.#RemoveSelfFromScene();
             NewList.push(this);
             this.SceneList = NewList;
         }
     }
 
-
     // Find Object in Scene List
     // Returns Index Pos
-    FindObjSceneIndex(TargetObj){
-        if (!this.SceneList){ return; }
+    FindObjSceneIndex(TargetObj) {
+        if (!this.SceneList) {
+            return;
+        }
         for (let i = 0; i < this.SceneList.length; i++) {
-            if (this.SceneList[i] == TargetObj){
+            if (this.SceneList[i] == TargetObj) {
                 return i;
             }
         }
         return null;
     }
 
-    Spawn(NewObj){
+    Spawn(NewObj) {
         NewObj.AddToSceneList(this.SceneList);
     }
 
-    Destroy(Obj){
+    Destroy(Obj) {
         this.#RemoveSelfFromScene();
+    }
+
+    OnObjectStay(CollisionEvent) {
     }
 }
 
@@ -894,30 +878,22 @@ class JSGameScene extends JSGameObject {
         this.SceneList = []
     }
 
-    Add(GameObj){
+    Add(GameObj) {
         //Check if object already exists in scene
-        function SearchForObj(target,List){
+        function SearchForObj(target, List) {
 
-            for (let i = 0; i < List.length;i++){
-                if (List[i] == target){
+            for (let i = 0; i < List.length; i++) {
+                if (List[i] == target) {
                     return i;
                 }
             }
 
             return null;
         }
-        if (GameObj instanceof JSGameObject ){
+
+        if (GameObj instanceof JSGameObject) {
             GameObj.AddToSceneList(this.SceneList);
         }
-    }
-
-    #SearchObjInScene(obj) {
-        for (let i = 0; i < this.SceneList.length; i++){
-            if (this.SceneList[i] == obj){
-                return i;
-            }
-        }
-        return null;
     }
 
     Tick() {
@@ -925,17 +901,16 @@ class JSGameScene extends JSGameObject {
         for (let i = 0; i < Objects.length; i++) {
             let objs = [Objects[i]];
             let children = objs[0].GetAllChildObjects();
-            for (let i in children){
+            for (let i in children) {
                 objs.push(children[i]);
             }
 
-            for (let i in objs){
+            for (let i in objs) {
                 objs[i].Tick(Time.deltaTime);
             }
         }
         this.#CollisionCheckObjs();
     }
-
 
     Draw(JSWebGlCamera) {
         MainWebGlContext.clear();
@@ -945,71 +920,90 @@ class JSGameScene extends JSGameObject {
             let objs = [Objects[i]];
             let children = objs[0].GetAllChildObjects();
 
-            for (let i in children){
+            for (let i in children) {
                 objs.push(children[i]);
             }
 
-            for (let i in objs){
+            for (let i in objs) {
                 objs[i].Tick(JSWebGlCamera);
             }
         }
     }
 
-
-    GetAllObjects(){
+    GetAllObjects() {
         let returnList = [];
-        for (let i in this.SceneList){
+        for (let i in this.SceneList) {
             returnList.push(this.SceneList[i]);
             let children = this.SceneList[i].GetAllChildObjects();
-            for (let c in children){
+            for (let c in children) {
                 returnList.push(children[c]);
             }
         }
 
         return returnList;
     }
+
+    // Checks collisions for all objects in a scene.
+    // Triggers Collision Functions in Objects if needed
+    // Collision Data is of Matter JS Type "Collision"
+    // See: https://brm.io/matter-js/docs/classes/Collision.html
     #CollisionCheckObjs() {
+        // Already checked existing
+        let existingEvent = [];
+
+        // Check the if collision between two objects has already been added
+        function CheckExistingEvent(thisObject, otherObj) {
+
+            function ifEvent(Object,Event) {
+                if (Event.objectA == Object || Event.objectB == Object){
+                    return true;
+                }
+                else{
+                    return false
+                }
+            }
+
+            // Look for existing events
+            for (let i = 0; i < existingEvent.length; i++) {
+                if (existingEvent[i]) {
+                    let event = existingEvent[i];
+                    if (ifEvent(thisObject,event) && ifEvent(otherObj,event)){
+                        return true;
+                    }
+                }
+            }
+            // Did not find existing event. Add event to array
+            {
+                existingEvent.push({
+                    objectA: thisObject,
+                    objectB: otherObj,
+                });
+            }
+            return false;
+        }
+
         let Objects = this.SceneList;
         for (let i = 0; i < Objects.length; i++) {
             for (let obj = 0; obj < Objects.length; obj++) {
                 if (obj != i) {
-                    //Objects[i].CollisionCheck(Objects[obj]);
+                    let response = Objects[i].CollisionCheck(Objects[obj]);
+                    if (response != null) {
+                        if (CheckExistingEvent(Objects[i], Objects[obj]) == false) {
+                            Objects[i].OnObjectStay({
+                                otherObj: Objects[obj],
+                                info: response
+                            })
+                            Objects[obj].OnObjectStay({
+                                otherObj: Objects[i],
+                                info: response
+                            })
+                        }
+                    }
                 }
             }
         }
 
     }
-
-    GroupObjectsByLayer() {
-        let ResultArray = []
-        let Objects = this.GetAllObjects();
-        for (let i = 0; i < Objects.length; i++) {
-            let LayerMatchIndex = null;
-
-            // Search if layer is already in list
-            for (let Layer = 0; Layer < ResultArray.length; Layer++) {
-                if (ResultArray[Layer][0] == Objects[i].LayerName) {
-                    LayerMatchIndex = Layer;
-                    break;
-                }
-            }
-
-            // Layer not on list. Add Layer
-            if (LayerMatchIndex == null) {
-                ResultArray.push([
-                    Objects[i].LayerName,
-                    [Objects[i]]
-                ])
-            }
-            // Layer on list. Push object to layer
-            else {
-                ResultArray[LayerMatchIndex][1].push(Objects[i])
-            }
-        }
-
-        return ResultArray;
-    }
-
     SortObjectsByDepth(JSWebGlCamera, ObjectList = this.GetAllObjects()) {
         if (!JSWebGlCamera) {
             console.warn("GameObject: SortObjectByDepth, no camera given");
@@ -1047,6 +1041,34 @@ class JSGameScene extends JSGameObject {
         }
         return RArray;
     }
+    GroupObjectsByLayer() {
+        let ResultArray = []
+        let Objects = this.GetAllObjects();
+        for (let i = 0; i < Objects.length; i++) {
+            let LayerMatchIndex = null;
+
+            // Search if layer is already in list
+            for (let Layer = 0; Layer < ResultArray.length; Layer++) {
+                if (ResultArray[Layer][0] == Objects[i].LayerName) {
+                    LayerMatchIndex = Layer;
+                    break;
+                }
+            }
+
+            // Layer not on list. Add Layer
+            if (LayerMatchIndex == null) {
+                ResultArray.push([
+                    Objects[i].LayerName,
+                    [Objects[i]]
+                ])
+            }
+            // Layer on list. Push object to layer
+            else {
+                ResultArray[LayerMatchIndex][1].push(Objects[i])
+            }
+        }
+        return ResultArray;
+    }
 }
 
 // Testing
@@ -1063,14 +1085,14 @@ let MainShaderContext = new JSWebGLShader(MainWebGlContext);
 let myCamera = new JSWebGlOrthoCamera(MainWebGlContext);
 
 const GameShape = {
-    Square : new JSWebGlSquare(MainWebGlContext),
-    Triangle : new JSWebGlTriangle(MainWebGlContext),
-    Circle : new JSWebGlCircle(MainWebGlContext)
+    Square: new JSWebGlSquare(MainWebGlContext),
+    Triangle: new JSWebGlTriangle(MainWebGlContext),
+    Circle: new JSWebGlCircle(MainWebGlContext)
 }
 
-const GameSprite ={
-    Player : {
-        Ship : new JSWebGlImage("GameAsset/Sprite/TestSprite.PNG")
+const GameSprite = {
+    Player: {
+        Ship: new JSWebGlImage("GameAsset/Sprite/TestSprite.PNG")
     }
 }
 
@@ -1091,36 +1113,36 @@ class PlayerPlane_Mesh extends JSWebGlTriangle {
     }
 }
 
-class HeroPlaneModel{
+class HeroPlaneModel {
     constructor() {
     }
 
-    draw(JSWebGlCamera,TargetTransform){
+    draw(JSWebGlCamera, TargetTransform) {
         let DrawTransform = new Transform();
         DrawTransform.SetParent(TargetTransform);
 
-        DrawTransform.position = [0,0,0,0];
-        GameShape.Square.setColour([1,1,1,1]);
-        GameShape.Square.draw(JSWebGlCamera,DrawTransform);
+        DrawTransform.position = [0, 0, 0, 0];
+        GameShape.Square.setColour([1, 1, 1, 1]);
+        GameShape.Square.draw(JSWebGlCamera, DrawTransform);
 
-        DrawTransform.position = [0,-1,0,0];
-        DrawTransform.scale = [1,1,1,0];
-        GameShape.Circle.draw(JSWebGlCamera,DrawTransform);
+        DrawTransform.position = [0, -1, 0, 0];
+        DrawTransform.scale = [1, 1, 1, 0];
+        GameShape.Circle.draw(JSWebGlCamera, DrawTransform);
 
-        DrawTransform.position = [1,0,0,0];
-        DrawTransform.scale = [1,1,1,0];
-        GameShape.Triangle.setColour([1,1,1,1]);
-        GameShape.Triangle.draw(JSWebGlCamera,DrawTransform);
+        DrawTransform.position = [1, 0, 0, 0];
+        DrawTransform.scale = [1, 1, 1, 0];
+        GameShape.Triangle.setColour([1, 1, 1, 1]);
+        GameShape.Triangle.draw(JSWebGlCamera, DrawTransform);
 
-        DrawTransform.position = [-1,0,0,0];
-        DrawTransform.scale = [1,1,1,0];
-        GameShape.Triangle.setColour([1,1,1,1]);
-        GameShape.Triangle.draw(JSWebGlCamera,DrawTransform);
+        DrawTransform.position = [-1, 0, 0, 0];
+        DrawTransform.scale = [1, 1, 1, 0];
+        GameShape.Triangle.setColour([1, 1, 1, 1]);
+        GameShape.Triangle.draw(JSWebGlCamera, DrawTransform);
 
-        DrawTransform.position = [0,-1.5,0,0];
-        DrawTransform.scale = [1,-0.5,1,0];
-        GameShape.Triangle.setColour([1,1,0,1]);
-        GameShape.Triangle.draw(JSWebGlCamera,DrawTransform);
+        DrawTransform.position = [0, -1.5, 0, 0];
+        DrawTransform.scale = [1, -0.5, 1, 0];
+        GameShape.Triangle.setColour([1, 1, 0, 1]);
+        GameShape.Triangle.draw(JSWebGlCamera, DrawTransform);
     }
 }
 
@@ -1209,8 +1231,8 @@ class UI_MoveJoystick extends JSGameObject {
             1
         ]
 
-        this.ThumbCirlce.draw(JSWebGlCamera,ThumbCirlceTransform);
-        this.OuterCircle.draw(JSWebGlCamera,this.transform);
+        this.ThumbCirlce.draw(JSWebGlCamera, ThumbCirlceTransform);
+        this.OuterCircle.draw(JSWebGlCamera, this.transform);
 
 
     }
@@ -1221,8 +1243,8 @@ class SomeBox extends JSGameObject {
         super("SomeBox");
         this.Collider = new JSGameBoxCollider(this.transform);
         this.SetMatterBody(Matter.Bodies.rectangle(
-            0,0,
-            1,1
+            0, 0,
+            1, 1
         ));
         this.Mesh = new JSWebGlSquare(MainWebGlContext, MainShaderContext, [1, 1, 1, 1]);
         this.Mesh.transform.SetParent(this.transform);
@@ -1230,23 +1252,21 @@ class SomeBox extends JSGameObject {
 
     Tick(DeltaTime) {
         this.transform.position = [10, 0, 0];
-        this.transform.scale = [1, 1, 1];
+        this.transform.scale = [50, 50, 1];
         this.transform.rotation[2] = 0;
     }
-
     Draw(JSWebGlCamera) {
-        GameShape.Square.setColour([1,1,1,1]);
-        GameShape.Square.Texture.clear([1,1,1,1]);
-        GameShape.Square.draw(JSWebGlCamera,this.transform);
+        GameShape.Square.setColour([1, 1, 1, 1]);
+        GameShape.Square.Texture.clear([1, 1, 1, 1]);
+        GameShape.Square.draw(JSWebGlCamera, this.transform);
     }
-
 }
 
 class TestBullet extends JSGameObject {
-    constructor(startPos = [0,0,0]) {
+    constructor(startPos = [0, 0, 0]) {
         super("Bullet");
         this.SetMatterBody(Matter.Bodies.rectangle(
-            0,0,1,1
+            0, 0, 1, 1
         ))
 
         this.transform.position[0] = startPos[0];
@@ -1262,48 +1282,60 @@ class TestBullet extends JSGameObject {
         this.transform.rotation[2] = 0;
 
         this.TimeAlive += Time.deltaTime;
-        if (this.TimeAlive > 2000){
+        if (this.TimeAlive > 2000) {
             this.Destroy(this);
         }
     }
 
     Draw(JSWebGlCamera) {
-        GameShape.Square.setColour([0,1,1,1]);
-        GameShape.Square.Texture.clear([1,1,1,1]);
-        GameShape.Square.draw(JSWebGlCamera,this.transform);
+        GameShape.Square.setColour([0, 1, 1, 1]);
+        GameShape.Square.Texture.clear([1, 1, 1, 1]);
+        GameShape.Square.draw(JSWebGlCamera, this.transform);
     }
 
+    OnObjectStay(CollisionEvent) {
+        let otherObj = CollisionEvent.otherObj;
+        if (otherObj instanceof TestBullet) { return; }
+        let penetration = CollisionEvent.info.penetration;
+        let penetrationX = CollisionEvent.info.penetration.x;
+        this.transform.position[0] -= penetration.x;
+        this.transform.position[1] += penetration.y;
+        console.log(`Bullet Hit ${CollisionEvent.otherObj.name}, pen = ${penetration}`);
+    }
 }
 
 class MyPlane extends JSGameObject {
     #MoveVector = [];
+
     constructor() {
         super("PlayerPlane");
         this.MoveSpeed = 1;
         this.SetMatterBody(Matter.Bodies.rectangle(
-            0,0,
-            1,1
+            0, 0,
+            1, 1
         ));
         this.Shot = {
             Delay: 150,
             Time: 0
         }
-        this.#MoveVector = [0,0];
-        
+        this.#MoveVector = [0, 0];
+
     }
 
     Draw(JSWebCamera) {
-        GameShape.Square.setColour([1,1,1,1]);
+        GameShape.Square.setColour([1, 1, 1, 1]);
         GameShape.Square.Texture.setAsImage(GameSprite.Player.Ship);
-        GameShape.Square.draw(JSWebCamera,this.transform);
+        GameShape.Square.draw(JSWebCamera, this.transform);
         this.transform.scale = [30, 30, 1]
     }
 
     Tick(DeltaTime) {
-        if (!MainWebGlContext.isFullscreen) { return; }
+        if (!MainWebGlContext.isFullscreen) {
+            return;
+        }
 
         this.Shot.Time -= Time.deltaTime;
-        if (this.Shot.Time < 0){
+        if (this.Shot.Time < 0) {
             this.Shot.Time = 0;
         }
 
@@ -1320,29 +1352,25 @@ class MyPlane extends JSGameObject {
 
             this.transform.position[0] += JoyStick.MoveX * DeltaTime / 2 * this.MoveSpeed;
             this.transform.position[1] += JoyStick.MoveY * DeltaTime / 2 * this.MoveSpeed;
-        }
-        else
-        {
-            if (KeyInput.GetKey("w").Pressed){
+        } else {
+            if (KeyInput.GetKey("w").Pressed) {
                 this.transform.position[1] += 1 * DeltaTime / 2 * this.MoveSpeed;
-            }
-            else if (KeyInput.GetKey("s").Pressed){
+            } else if (KeyInput.GetKey("s").Pressed) {
                 this.transform.position[1] -= 1 * DeltaTime / 2 * this.MoveSpeed;
             }
 
-            if (KeyInput.GetKey("a").Pressed){
+            if (KeyInput.GetKey("a").Pressed) {
                 this.transform.position[0] -= 1 * DeltaTime / 2 * this.MoveSpeed;
-            }
-            else if (KeyInput.GetKey("d").Pressed){
+            } else if (KeyInput.GetKey("d").Pressed) {
                 this.transform.position[0] += 1 * DeltaTime / 2 * this.MoveSpeed;
             }
         }
 
-        if (TouchInput.touch[1].isPressed || KeyInput.GetKey("j").Pressed){
+        if (TouchInput.touch[1].isPressed || KeyInput.GetKey("j").Pressed) {
             if (this.Shot.Time <= 0) {
                 let newBullet = new TestBullet([
                     this.transform.position[0],
-                    this.transform.position[1] + this.transform.scale[1]*2,
+                    this.transform.position[1] + this.transform.scale[1] * 2,
                     this.transform.position[2] + 100
                 ]);
                 this.Spawn(newBullet);
@@ -1361,16 +1389,17 @@ class TestScene extends JSGameScene {
     constructor() {
         super();
         this.Camera = new JSWebGlUICamera(MainWebGlContext);
-
         //this.Add(new SomeBox());
         this.Add(new MyPlane());
         this.Add(new UI_MoveJoystick());
+        this.Add(new SomeBox());
     }
 
     Tick() {
         super.Tick();
         this.Camera.transform.position = [0, 0, 10];
     }
+
     Draw(JSWebGlCamera = this.Camera) {
         for (let object of this.SortObjectsByDepth(this.Camera)) {
             object.Draw(JSWebGlCamera);
@@ -1384,15 +1413,14 @@ let MyTestScene = new TestScene();
 function loop() {
 
     let key = KeyInput.GetKey("w");
-    if (KeyInput.GetKey("w").Down){
+    if (KeyInput.GetKey("w").Down) {
         console.log(`KeyDown | Frames = ${KeyInput.GetKey("w")._Frames}`);
-    }
-    else if (KeyInput.GetKey("w").Up){
+    } else if (KeyInput.GetKey("w").Up) {
         console.log("KeyUp");
     }
 
 
-    if (MouseInput.Button[0].Down){
+    if (MouseInput.Button[0].Down) {
         console.log(`Mouse Down Press`);
     }
     myCamera.Size = [testCanvas.width, testCanvas.height];
