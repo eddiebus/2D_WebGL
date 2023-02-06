@@ -1296,11 +1296,7 @@ class TestBullet extends JSGameObject {
     OnObjectStay(CollisionEvent) {
         let otherObj = CollisionEvent.otherObj;
         if (otherObj instanceof TestBullet) { return; }
-        let penetration = CollisionEvent.info.penetration;
-        let penetrationX = CollisionEvent.info.penetration.x;
-        this.transform.position[0] -= penetration.x;
-        this.transform.position[1] += penetration.y;
-        console.log(`Bullet Hit ${CollisionEvent.otherObj.name}, pen = ${penetration}`);
+        this.Destroy(this);
     }
 }
 
