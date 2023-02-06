@@ -869,12 +869,16 @@ class JSGameObject {
 }
 
 class JSGameScene extends JSGameObject {
+    #CollisionEvents ={
+        OnEnter: [],
+        OnStay: [],
+        OnExit: []
+    }
     constructor() {
         super("Scene", {
             Root: true,
             LayerID: 0
         });
-
         this.SceneList = []
     }
 
