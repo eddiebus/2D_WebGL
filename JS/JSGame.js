@@ -869,17 +869,18 @@ class JSGameObject {
 }
 
 class JSGameScene extends JSGameObject {
-    #CollisionEvents ={
-        OnEnter: [],
-        OnStay: [],
-        OnExit: []
-    }
+    #CollisionEvents = {};
     constructor() {
         super("Scene", {
             Root: true,
             LayerID: 0
         });
         this.SceneList = []
+        this.#CollisionEvents = {
+            OnEnter: [],
+            OnStay: [],
+            OnExit: []
+        }
     }
 
     Add(GameObj) {
@@ -947,6 +948,7 @@ class JSGameScene extends JSGameObject {
         return returnList;
     }
 
+
     // Checks collisions for all objects in a scene.
     // Triggers Collision Functions in Objects if needed
     // Collision Data is of Matter JS Type "Collision"
@@ -955,8 +957,18 @@ class JSGameScene extends JSGameObject {
         // Already checked existing
         let existingEvent = [];
 
+
+        //Update Existing Enter Events
+        let EnterEvents = this.#CollisionEvents.OnEnter;
+        for (let i =0; i < EnterEvents; i++){
+            EnterEvents[i][2] += 1;
+            if (EnterEvents[i][2] >= 1){
+                EnterEvents = EnterEvents.splice(i,1);
+            }
+        }
+
         // Check the if collision between two objects has already been added
-        function CheckExistingEvent(thisObject, otherObj) {
+        function CheckExistingStayEvent(thisObject, otherObj) {
 
             function ifEvent(Object,Event) {
                 if (Event.objectA == Object || Event.objectB == Object){
@@ -992,7 +1004,7 @@ class JSGameScene extends JSGameObject {
                 if (obj != i) {
                     let response = Objects[i].CollisionCheck(Objects[obj]);
                     if (response != null) {
-                        if (CheckExistingEvent(Objects[i], Objects[obj]) == false) {
+                        if (CheckExistingStayEvent(Objects[i], Objects[obj]) == false) {
                             Objects[i].OnObjectStay({
                                 otherObj: Objects[obj],
                                 info: response
