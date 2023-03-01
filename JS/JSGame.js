@@ -75,7 +75,6 @@ class JSGameTouch {
                 matchTouch = event.changedTouches[i];
             }
         }
-
         return matchTouch;
     }
 
@@ -145,6 +144,7 @@ class JSGameTouch {
                 myTouch = event.changedTouches[i];
             }
         }
+
         // Not this touch, do nothing
         if (!myTouch) {
             return;
@@ -154,7 +154,6 @@ class JSGameTouch {
         this.Down = false;
         this.isPressed = false;
         this._Frames = 0;
-
 
         this.ConsoleLogSelf();
     }
@@ -712,7 +711,6 @@ class JSGameObject {
         }
     }
 
-
     Draw(JSWebGlCamera) {
     }
 
@@ -870,6 +868,7 @@ class JSGameObject {
 
 class JSGameScene extends JSGameObject {
     #CollisionEvents = {};
+
     constructor() {
         super("Scene", {
             Root: true,
@@ -948,16 +947,11 @@ class JSGameScene extends JSGameObject {
         return returnList;
     }
 
-
     // Checks collisions for all objects in a scene.
     // Triggers Collision Functions in Objects if needed
     // Collision Data is of Matter JS Type "Collision"
     // See: https://brm.io/matter-js/docs/classes/Collision.html
     #CollisionCheckObjs() {
-        // Already checked existing
-        let existingEvent = [];
-
-
         //Update Existing Enter Events
         let EnterEvents = this.#CollisionEvents.OnEnter;
         for (let i =0; i < EnterEvents; i++){
@@ -967,44 +961,57 @@ class JSGameScene extends JSGameObject {
             }
         }
 
+        // Already checked existing
+        let ExistingStayEvent = [];
         // Check the if collision between two objects has already been added
-        function CheckExistingStayEvent(thisObject, otherObj) {
+        // Will return false and add to list if Event is new
+        function HandleStayEvent(thisObject, otherObj) {
 
-            function ifEvent(Object,Event) {
-                if (Event.objectA == Object || Event.objectB == Object){
+            // if either object is in event
+            function ifEvent(thisObject,otherObject,Event) {
+                let matchCount = 0;
+
+                if (Event.objectA == thisObject || Event.objectB == thisObject){
+                    matchCount ++;
+                }
+
+                if (Event.objectA == otherObject || Event.objectB == otherObject){
+                    matchCount ++;
+                }
+
+                if (matchCount == 2){
                     return true;
                 }
                 else{
-                    return false
+                    return false;
                 }
             }
 
             // Look for existing events
-            for (let i = 0; i < existingEvent.length; i++) {
-                if (existingEvent[i]) {
-                    let event = existingEvent[i];
-                    if (ifEvent(thisObject,event) && ifEvent(otherObj,event)){
+            for (let i = 0; i < ExistingStayEvent.length; i++) {
+                if (ExistingStayEvent[i]) {
+                    let event = ExistingStayEvent[i];
+                    if (ifEvent(thisObject,otherObj,event)){
                         return true;
                     }
                 }
             }
             // Did not find existing event. Add event to array
             {
-                existingEvent.push({
+                ExistingStayEvent.push({
                     objectA: thisObject,
                     objectB: otherObj,
                 });
             }
             return false;
         }
-
         let Objects = this.SceneList;
         for (let i = 0; i < Objects.length; i++) {
             for (let obj = 0; obj < Objects.length; obj++) {
                 if (obj != i) {
                     let response = Objects[i].CollisionCheck(Objects[obj]);
                     if (response != null) {
-                        if (CheckExistingStayEvent(Objects[i], Objects[obj]) == false) {
+                        if (HandleStayEvent(Objects[i], Objects[obj]) == false) {
                             Objects[i].OnObjectStay({
                                 otherObj: Objects[obj],
                                 info: response
