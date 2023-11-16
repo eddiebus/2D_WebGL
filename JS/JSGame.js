@@ -1364,11 +1364,7 @@ class TutorialText extends JSGameObject {
         this.TextObj.SetText("Controls: [W][A][S][D] Move | [J] Fire ")
         this.SquareMesh = new JSWebGlSquare(MainWebGlContext);
         this.SquareMesh.setShader(MainShaderContext);
-        this.Collider = new JSGameBoxCollider(this.transform);
-        this.SetMatterBody(Matter.Bodies.rectangle(
-            0, 0,
-            1, 1
-        ));
+        
     }
 
     Tick(DeltaTime) {
