@@ -3,7 +3,6 @@ class WebGlText extends JSWebGlSquare {
         super(WebGlContext, MainShaderContext,[1, 1, 1, 1]);
         this._targetCanvas = document.createElement("canvas");
 
-
         // WebGl Objects
         this._TextCanvasTexture = new JSWebGlCanvasTexture(WebGlContext, this._targetCanvas);
         this._canvasContext = this._TextCanvasTexture.GetCanvasContext();
@@ -18,7 +17,7 @@ class WebGlText extends JSWebGlSquare {
             },
             strokeStyle: {
                 width: 3,
-                colour: [0, 0, 0, 0]
+                colour: [0, 0, 0, 1]
             },
             maxLength: 0,
             maxHeight: 0,

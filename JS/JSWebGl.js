@@ -620,12 +620,16 @@ class JSWebGlUICamera extends JSWebGlOrthoCamera{
     constructor(JSWebGlContext) {
         super(JSWebGlContext);
 
-        this.size = {
+        this.Size = {
             width: 0,
             height: 0
         }
 
         this.Tick()
+    }
+
+    GetSize() {
+        return [this._parentContext._canvas.width,this._parentContext._canvas.height];
     }
 
     // UpdateCollider matrix and size to fit canvas

@@ -1094,7 +1094,6 @@ class JSGameScene extends JSGameObject {
     }
 }
 
-// Testing
 let testCanvas = document.getElementById("Canvas");
 let testCanvas_MouseInput = new JSGameMouseInput(testCanvas);
 testCanvas_MouseInput.locked = false;
@@ -1122,54 +1121,6 @@ const GameSprite = {
 GameShape.Triangle.setShader(MainShaderContext);
 GameShape.Circle.setShader(MainShaderContext);
 GameShape.Square.setShader(MainShaderContext);
-
-class PlayerPlane_Mesh extends JSWebGlTriangle {
-    constructor() {
-        let myImage = new JSWebGlImage(
-            "https://is3-ssl.mzstatic.com/image/thumb/Purple111/v4/cd/7f/f0/cd7ff0df-cb1f-8d10-6c4a-9cde28f2c5a5/source/256x256bb.jpg"
-        );
-        let texture = new JSWebGlCanvasTexture(MainWebGlContext);
-        texture.setAsImage(myImage);
-        super(MainWebGlContext, MainShaderContext, [0, 0, 0, 1]);
-        this.setTexture(texture);
-        this.Colour = [1, 1, 1, 1];
-    }
-}
-
-class HeroPlaneModel {
-    constructor() {
-    }
-
-    draw(JSWebGlCamera, TargetTransform) {
-        let DrawTransform = new Transform();
-        DrawTransform.SetParent(TargetTransform);
-
-        DrawTransform.position = [0, 0, 0, 0];
-        GameShape.Square.setColour([1, 1, 1, 1]);
-        GameShape.Square.draw(JSWebGlCamera, DrawTransform);
-
-        DrawTransform.position = [0, -1, 0, 0];
-        DrawTransform.scale = [1, 1, 1, 0];
-        GameShape.Circle.draw(JSWebGlCamera, DrawTransform);
-
-        DrawTransform.position = [1, 0, 0, 0];
-        DrawTransform.scale = [1, 1, 1, 0];
-        GameShape.Triangle.setColour([1, 1, 1, 1]);
-        GameShape.Triangle.draw(JSWebGlCamera, DrawTransform);
-
-        DrawTransform.position = [-1, 0, 0, 0];
-        DrawTransform.scale = [1, 1, 1, 0];
-        GameShape.Triangle.setColour([1, 1, 1, 1]);
-        GameShape.Triangle.draw(JSWebGlCamera, DrawTransform);
-
-        DrawTransform.position = [0, -1.5, 0, 0];
-        DrawTransform.scale = [1, -0.5, 1, 0];
-        GameShape.Triangle.setColour([1, 1, 0, 1]);
-        GameShape.Triangle.draw(JSWebGlCamera, DrawTransform);
-    }
-}
-
-let PlayerPlaneMesh = new HeroPlaneModel();
 
 class UI_MoveJoystick extends JSGameObject {
     constructor() {
@@ -1269,8 +1220,6 @@ class SomeBox extends JSGameObject {
             0, 0,
             1, 1
         ));
-        this.Mesh = new JSWebGlSquare(MainWebGlContext, MainShaderContext, [1, 1, 1, 1]);
-        this.Mesh.transform.SetParent(this.transform);
     }
 
     Tick(DeltaTime) {
@@ -1285,7 +1234,7 @@ class SomeBox extends JSGameObject {
     }
 }
 
-class TestBullet extends JSGameObject {
+class PlayerBullet extends JSGameObject {
     constructor(startPos = [0, 0, 0]) {
         super("Bullet");
         this.SetMatterBody(Matter.Bodies.rectangle(
@@ -1318,7 +1267,7 @@ class TestBullet extends JSGameObject {
 
     OnObjectStay(CollisionEvent) {
         let otherObj = CollisionEvent.otherObj;
-        if (otherObj instanceof TestBullet) { return; }
+        if (otherObj instanceof PlayerBullet) { return; }
         this.Destroy(this);
     }
 }
@@ -1387,7 +1336,7 @@ class MyPlane extends JSGameObject {
 
         if (TouchInput.touch[1].isPressed || KeyInput.GetKey("j").Pressed) {
             if (this.Shot.Time <= 0) {
-                let newBullet = new TestBullet([
+                let newBullet = new PlayerBullet([
                     this.transform.position[0],
                     this.transform.position[1] + this.transform.scale[1] * 2,
                     this.transform.position[2] + 100
@@ -1407,6 +1356,38 @@ class MyPlane extends JSGameObject {
     }
 }
 
+class TutorialText extends JSGameObject {
+    constructor() {
+        super("Tutorial Text");
+
+        this.TextObj = new WebGlText(MainWebGlContext);
+        this.TextObj.SetText("Controls: [W][A][S][D] Move | [J] Fire ")
+        this.SquareMesh = new JSWebGlSquare(MainWebGlContext);
+        this.SquareMesh.setShader(MainShaderContext);
+        this.Collider = new JSGameBoxCollider(this.transform);
+        this.SetMatterBody(Matter.Bodies.rectangle(
+            0, 0,
+            1, 1
+        ));
+    }
+
+    Tick(DeltaTime) {
+        this.transform.position = [-50, 0, 0];
+        this.transform.scale = [50, 50, 1];
+        this.transform.rotation[2] = 0;
+    }
+
+    Draw(JSWebGlCamera) {
+        let camSize = JSWebGlCamera.GetSize();
+        console.log(`Cam Size = ${camSize}`);
+        this.transform.position = [0,(+camSize[1]/2) * 0.5,5]
+        this.transform.scale = [camSize[0] * 0.4,(camSize[1] / 4) * 0.05,1]
+        this.SquareMesh.setColour([1, 1, 0, 1]);
+        this.SquareMesh.Texture = this.TextObj._TextCanvasTexture;
+        this.SquareMesh.draw(JSWebGlCamera, this.transform);
+    }
+}
+
 MainWebGlContext.setCanFullScreen(true);
 MainWebGlContext.resolutionScale = 1;
 
@@ -1414,10 +1395,10 @@ class TestScene extends JSGameScene {
     constructor() {
         super();
         this.Camera = new JSWebGlUICamera(MainWebGlContext);
-        //this.Add(new SomeBox());
         this.Add(new MyPlane());
         this.Add(new UI_MoveJoystick());
         this.Add(new SomeBox());
+        this.Add(new TutorialText());
     }
 
     Tick() {
